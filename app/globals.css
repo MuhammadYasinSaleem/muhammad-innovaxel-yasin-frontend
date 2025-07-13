@@ -1,0 +1,6 @@
+@import "tailwindcss";
+/* app/globals.css */
+
+:root {
+  --font-bricolage: 'Bricolage Grotesque', sans-serif;
+}
