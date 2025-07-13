@@ -16,6 +16,10 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${bricolage.className} ${bricolage.variable}`}>
+      <head>
+        <meta name="apple-mobile-web-app-title" content="Linkly" />
+      </head>
+
       <body suppressHydrationWarning={true}>{children}</body>
     </html>
   );

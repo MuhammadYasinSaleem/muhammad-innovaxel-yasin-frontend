@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { Link as LinkIcon } from "lucide-react";
 
 export default function Navbar() {
   return (
@@ -21,13 +21,7 @@ export default function Navbar() {
             <div className="relative">
               <div className="flex items-center bg-[#181E29]/70 backdrop-blur-md rounded-full px-4 py-[0.5rem] border border-gray-700/50 shadow-lg ring-3 ring-gray-600">
                 <div className="p-1.5 mr-3">
-                  <Image
-                    src="/link.png"
-                    alt="URL Icon"
-                    width={20}
-                    height={20}
-                    className="w-4 h-4 filter brightness-0 invert"
-                  />
+                  <LinkIcon className="w-5 h-5 text-white opacity-80" />
                 </div>
                 <input
                   type="text"
