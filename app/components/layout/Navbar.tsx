@@ -2,19 +2,36 @@
 
 import type React from "react"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { LinkIcon, Copy, Check } from "lucide-react"
-import { useState } from "react"
 import { useUrlShortener } from "@/hooks/useUrlShortener"
 
 export default function Navbar() {
   const [url, setUrl] = useState("")
   const [copied, setCopied] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [showError, setShowError] = useState(false)
   const { shortenUrl, isLoading, error, shortenedUrl, clearResult } = useUrlShortener()
+
+  useEffect(() => {
+    if (shortenedUrl) {
+      setShowSuccess(true)
+      const timer = setTimeout(() => setShowSuccess(false), 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [shortenedUrl])  
+
+  useEffect(() => {
+    if (error) {
+      setShowError(true)
+      const timer = setTimeout(() => setShowError(false), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [error])
 
   const handleShortenUrl = async () => {
     if (!url.trim()) return
-
     await shortenUrl(url)
   }
 
@@ -80,34 +97,31 @@ export default function Navbar() {
                 </button>
               </div>
 
-              {/* Error Message */}
-              {error && (
-                <div className="absolute top-full left-0 right-0 mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                  <p className="text-red-400 text-sm">{error}</p>
-                </div>
-              )}
-
               {/* Success Message */}
-              {shortenedUrl && (
-                <div className="absolute top-full left-0 right-0 mt-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+              {shortenedUrl && showSuccess && (
+                <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-[28rem] max-w-full p-3 bg-green-500/10 border border-green-500/20 rounded-lg z-20">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-green-400 text-sm font-medium">URL shortened successfully!</p>
-                      <p className="text-white text-sm mt-1">
-                        Short URL:
-                        <span className="ml-2 text-blue-400 font-mono">
-                          {`${window.location.origin}/${shortenedUrl.shortCode}`}
-                        </span>
+                    <div className="flex-1">
+                      <p className="text-green-400 text-xs font-medium">Success!</p>
+                      <p className="text-white text-xs mt-1 break-all">
+                        {`${typeof window !== "undefined" ? window.location.origin : ""}/${shortenedUrl.shortCode}`}
                       </p>
                     </div>
                     <button
-                      onClick={() => copyToClipboard(`${window.location.origin}/${shortenedUrl.shortCode}`)}
-                      className="ml-2 p-2 text-blue-400 hover:text-blue-300 transition-colors"
-                      title="Copy to clipboard"
+                      onClick={() => copyToClipboard(`${typeof window !== "undefined" ? window.location.origin : ""}/${shortenedUrl.shortCode}`)}
+                      className="ml-2 p-1 text-blue-400 hover:text-blue-300 transition-colors"
+                      title="Copy"
                     >
-                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                     </button>
                   </div>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {error && showError && (
+                <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-[28rem] max-w-full p-3 bg-red-500/10 border border-red-500/20 rounded-lg z-20">
+                  <p className="text-red-400 text-xs text-center">{error}</p>
                 </div>
               )}
             </div>
@@ -139,3 +153,5 @@ export default function Navbar() {
     </nav>
   )
 }
+
+

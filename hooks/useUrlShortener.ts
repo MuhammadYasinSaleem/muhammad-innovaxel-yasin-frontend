@@ -1,45 +1,36 @@
-"use client"
-
-import { useState } from "react"
-import { apiService, type ShortenResponse } from "@/lib/api"
+// hooks/useUrlShortener.ts
+import { useState } from 'react';
+import { apiService } from '@/lib/api';
 
 export const useUrlShortener = () => {
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [shortenedUrl, setShortenedUrl] = useState<ShortenResponse | null>(null)
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [shortenedUrl, setShortenedUrl] = useState<{
+    _id: string;
+    shortCode: string;
+    originalUrl: string;
+    createdAt: string;
+    updatedAt: string;
+  } | null>(null);
 
-  const shortenUrl = async (url: string) => {
-    if (!url.trim()) {
-      setError("Please enter a valid URL")
-      return
-    }
-
-    // Basic URL validation
-    try {
-      new URL(url)
-    } catch {
-      setError("Please enter a valid URL")
-      return
-    }
-
-    setIsLoading(true)
-    setError(null)
+  const shortenUrl = async (originalUrl: string) => {
+    setIsLoading(true);
+    setError(null);
 
     try {
-      const result = await apiService.createShortUrl(url)
-      setShortenedUrl(result)
-      return result
+      const response = await apiService.shortenUrl(originalUrl);
+      setShortenedUrl(response);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to shorten URL")
+      setError(err instanceof Error ? err.message : 'Failed to shorten URL');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const clearResult = () => {
-    setShortenedUrl(null)
-    setError(null)
-  }
+    setShortenedUrl(null);
+    setError(null);
+  };
 
   return {
     shortenUrl,
@@ -47,5 +38,5 @@ export const useUrlShortener = () => {
     error,
     shortenedUrl,
     clearResult,
-  }
-}
+  };
+};

@@ -1,92 +1,95 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.0.105:3000" // Replace with your backend URL
-
-export interface ShortenResponse {
-  id: string
-  url: string
-  shortCode: string
-  createdAt: string
-  updatedAt: string
+// lib/api.ts
+interface ShortUrlResponse {
+  _id: string;
+  originalUrl: string;
+  shortCode: string;
+  accessCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface StatsResponse extends ShortenResponse {
-  accessCount: number
-}
+export type LinkHistory = {
+  _id: string;
+  shortLink: string;
+  originalLink: string;
+  clicks: number;
+  updatedAt: string | Date;
+  // ...other fields as needed
+};
 
-export interface LinkHistory {
-  _id: string
-  shortLink: string
-  originalLink: string
-  qrCode: string
-  clicks: number
-  status: "active" | "inactive" | "expired"
-  createdAt: Date
-  updatedAt: Date
-}
-
-class ApiService {
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`
-
-    const config: RequestInit = {
+export const apiService = {
+  async shortenUrl(originalUrl: string): Promise<ShortUrlResponse> {
+    const response = await fetch('/shorten', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
+        'Content-Type': 'application/json',
       },
-      ...options,
+      body: JSON.stringify({ originalUrl }),
+    });
+
+    if (!response.ok) {
+      throw new Error(await response.text());
     }
 
-    try {
-      const response = await fetch(url, config)
+    return response.json();
+  },
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
-      }
-
-      return await response.json()
-    } catch (error) {
-      console.error("API request failed:", error)
-      throw error
-    }
-  }
-
-  // Create a new short URL
-  async createShortUrl(url: string): Promise<ShortenResponse> {
-    return this.request<ShortenResponse>("/shorten", {
-      method: "POST",
-      body: JSON.stringify({ url }),
-    })
-  }
-
-  // Get original URL from short code
-  async getOriginalUrl(shortCode: string): Promise<ShortenResponse> {
-    return this.request<ShortenResponse>(`/shorten/${shortCode}`)
-  }
-
-  // Update existing short URL
-  async updateShortUrl(shortCode: string, url: string): Promise<ShortenResponse> {
-    return this.request<ShortenResponse>(`/shorten/${shortCode}`, {
-      method: "PUT",
-      body: JSON.stringify({ url }),
-    })
-  }
-
-  // Delete short URL
-  async deleteShortUrl(shortCode: string): Promise<void> {
-    await this.request(`/shorten/${shortCode}`, {
-      method: "DELETE",
-    })
-  }
-
-  // Get URL statistics
-  async getUrlStats(shortCode: string): Promise<StatsResponse> {
-    return this.request<StatsResponse>(`/shorten/${shortCode}/stats`)
-  }
-
-  // Get all user's short URLs (you might need to implement this endpoint)
   async getAllShortUrls(): Promise<LinkHistory[]> {
-    return this.request<LinkHistory[]>("/shorten")
-  }
-}
+    const response = await fetch('/shorten');
+    if (!response.ok) {
+      throw new Error('Failed to fetch URLs');
+    }
+    const data = await response.json();
+    return data.map((url: any) => ({
+      _id: url._id,
+      shortLink: url.shortCode,
+      originalLink: url.originalUrl,
+      clicks: url.accessCount,
+      updatedAt: new Date(url.updatedAt),
+    }));
+  },
 
-export const apiService = new ApiService()
+  async getOriginalUrl(shortCode: string): Promise<{ url: string }> {
+    const response = await fetch(`/shorten/${shortCode}`);
+    if (!response.ok) {
+      throw new Error('URL not found');
+    }
+    const data = await response.json();
+    return { url: data.originalUrl };
+  },
+
+  async updateShortUrl(shortCode: string, newUrl: string): Promise<{ url: string; updatedAt: string }> {
+    const response = await fetch(`/shorten/${shortCode}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ originalUrl: newUrl }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update URL');
+    }
+
+    const data = await response.json();
+    return { url: data.originalUrl, updatedAt: new Date().toISOString() };
+  },
+
+  async deleteShortUrl(shortCode: string): Promise<void> {
+    const response = await fetch(`/shorten/${shortCode}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete URL');
+    }
+  },
+
+  async getUrlStats(shortCode: string): Promise<ShortUrlResponse> {
+    const response = await fetch(`/shorten/${shortCode}/stats`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch stats');
+    }
+    return response.json();
+  },
+};

@@ -1,177 +1,151 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Edit2, Trash2, ChevronDown, ChevronUp, ExternalLink } from "lucide-react"
-import { apiService, type LinkHistory } from "@/lib/api"
+import { useState, useEffect } from "react";
+import {
+  Edit2,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+} from "lucide-react";
+import { apiService, type LinkHistory } from "@/lib/api";
 
 const HistoryTable = () => {
-  const [data, setData] = useState<LinkHistory[]>([])
-  const [filteredData, setFilteredData] = useState<LinkHistory[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editUrl, setEditUrl] = useState("")
+  const [data, setData] = useState<LinkHistory[]>([]);
+  const [filteredData, setFilteredData] = useState<LinkHistory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editUrl, setEditUrl] = useState("");
 
   const [sortConfig, setSortConfig] = useState<{
-    key: string
-    direction: "ascending" | "descending"
-  } | null>(null)
+    key: string;
+    direction: "ascending" | "descending";
+  } | null>(null);
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   const fetchData = async () => {
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
 
     try {
-      // For now, using mock data since the backend might not have a "get all" endpoint
-      // Replace this with actual API call when available
-      const mockData: LinkHistory[] = [
-        {
-          _id: "1",
-          shortLink: "abc123",
-          originalLink: "https://example.com/very/long/url/that/needs/to/be/shortened",
-          qrCode: "/qr-codes/abc123.png",
-          clicks: 42,
-          status: "active",
-          createdAt: new Date("2023-05-15"),
-          updatedAt: new Date("2023-05-15"),
-        },
-        {
-          _id: "2",
-          shortLink: "def456",
-          originalLink: "https://another-example.com/long/path/to/resource",
-          qrCode: "/qr-codes/def456.png",
-          clicks: 18,
-          status: "inactive",
-          createdAt: new Date("2023-06-20"),
-          updatedAt: new Date("2023-06-22"),
-        },
-        {
-          _id: "3",
-          shortLink: "ghi789",
-          originalLink: "https://third-example.com/even/longer/url/here",
-          qrCode: "/qr-codes/ghi789.png",
-          clicks: 75,
-          status: "expired",
-          createdAt: new Date("2023-04-10"),
-          updatedAt: new Date("2023-07-01"),
-        },
-      ]
-
-      // Uncomment this when you have the endpoint ready:
-      // const response = await apiService.getAllShortUrls();
-      // setData(response);
-      // setFilteredData(response);
-
-      setData(mockData)
-      setFilteredData(mockData)
+      const response = await apiService.getAllShortUrls();
+      setData(response);
+      setFilteredData(response);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch data")
-      console.error("Error fetching data:", err)
+      setError(err instanceof Error ? err.message : "Failed to fetch data");
+      console.error("Error fetching data:", err);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
-
+  };
   const requestSort = (key: string) => {
-    let direction: "ascending" | "descending" = "ascending"
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === "ascending") {
-      direction = "descending"
+    let direction: "ascending" | "descending" = "ascending";
+    if (
+      sortConfig &&
+      sortConfig.key === key &&
+      sortConfig.direction === "ascending"
+    ) {
+      direction = "descending";
     }
-    setSortConfig({ key, direction })
+    setSortConfig({ key, direction });
 
     const sortedData = [...filteredData].sort((a, b) => {
-      const aValue = a[key as keyof LinkHistory]
-      const bValue = b[key as keyof LinkHistory]
+      const aValue = a[key as keyof LinkHistory];
+      const bValue = b[key as keyof LinkHistory];
       if (aValue < bValue) {
-        return direction === "ascending" ? -1 : 1
+        return direction === "ascending" ? -1 : 1;
       }
       if (aValue > bValue) {
-        return direction === "ascending" ? 1 : -1
+        return direction === "ascending" ? 1 : -1;
       }
-      return 0
-    })
-    setFilteredData(sortedData)
-  }
+      return 0;
+    });
+    setFilteredData(sortedData);
+  };
 
   const handleDelete = async (shortCode: string) => {
     if (!confirm("Are you sure you want to delete this short URL?")) {
-      return
+      return;
     }
 
     try {
-      await apiService.deleteShortUrl(shortCode)
+      await apiService.deleteShortUrl(shortCode);
 
       // Update local state
-      const updatedData = data.filter((item) => item.shortLink !== shortCode)
-      setData(updatedData)
-      setFilteredData(updatedData)
+      const updatedData = data.filter((item) => item.shortLink !== shortCode);
+      setData(updatedData);
+      setFilteredData(updatedData);
 
-      alert("Entry deleted successfully")
+      alert("Entry deleted successfully");
     } catch (error) {
-      console.error("Error deleting entry:", error)
-      alert("Failed to delete entry. Please try again.")
+      console.error("Error deleting entry:", error);
+      alert("Failed to delete entry. Please try again.");
     }
-  }
+  };
 
   const handleEdit = (item: LinkHistory) => {
-    setEditingId(item._id)
-    setEditUrl(item.originalLink)
-  }
+    setEditingId(item._id);
+    setEditUrl(item.originalLink);
+  };
 
   const handleSaveEdit = async (shortCode: string) => {
     if (!editUrl.trim()) {
-      alert("Please enter a valid URL")
-      return
+      alert("Please enter a valid URL");
+      return;
     }
 
     try {
-      const updatedItem = await apiService.updateShortUrl(shortCode, editUrl)
+      const updatedItem = await apiService.updateShortUrl(shortCode, editUrl);
 
       // Update local state
       const updatedData = data.map((item) =>
         item.shortLink === shortCode
-          ? { ...item, originalLink: updatedItem.url, updatedAt: new Date(updatedItem.updatedAt) }
-          : item,
-      )
+          ? {
+              ...item,
+              originalLink: updatedItem.url,
+              updatedAt: new Date(updatedItem.updatedAt),
+            }
+          : item
+      );
 
-      setData(updatedData)
-      setFilteredData(updatedData)
-      setEditingId(null)
-      setEditUrl("")
+      setData(updatedData);
+      setFilteredData(updatedData);
+      setEditingId(null);
+      setEditUrl("");
 
-      alert("URL updated successfully")
+      alert("URL updated successfully");
     } catch (error) {
-      console.error("Error updating entry:", error)
-      alert("Failed to update entry. Please try again.")
+      console.error("Error updating entry:", error);
+      alert("Failed to update entry. Please try again.");
     }
-  }
+  };
 
   const handleCancelEdit = () => {
-    setEditingId(null)
-    setEditUrl("")
-  }
+    setEditingId(null);
+    setEditUrl("");
+  };
 
   const handleRedirect = async (shortCode: string) => {
     try {
-      const response = await apiService.getOriginalUrl(shortCode)
-      window.open(response.url, "_blank")
+      const response = await apiService.getOriginalUrl(shortCode);
+      window.open(response.url, "_blank");
     } catch (error) {
-      console.error("Error redirecting:", error)
-      alert("Failed to redirect. URL might be expired or invalid.")
+      console.error("Error redirecting:", error);
+      alert("Failed to redirect. URL might be expired or invalid.");
     }
-  }
+  };
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
-    })
-  }
+    });
+  };
 
   if (isLoading) {
     return (
@@ -181,7 +155,7 @@ const HistoryTable = () => {
           <p className="mt-4 text-gray-400">Loading your links...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -197,7 +171,7 @@ const HistoryTable = () => {
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -216,8 +190,13 @@ const HistoryTable = () => {
         <div className="bg-[#0d1117] rounded-lg overflow-hidden shadow-lg">
           {/* Grid Headers - Desktop */}
           <div className="hidden md:grid grid-cols-8 gap-4 p-4 bg-[#181e29] border-b border-[#0f1318]">
-            <div className="col-span-3 flex items-center cursor-pointer" onClick={() => requestSort("shortLink")}>
-              <span className="text-xs font-medium text-white uppercase">Short Link</span>
+            <div
+              className="col-span-3 flex items-center cursor-pointer"
+              onClick={() => requestSort("shortLink")}
+            >
+              <span className="text-xs font-medium text-white uppercase">
+                Short Link
+              </span>
               {sortConfig?.key === "shortLink" &&
                 (sortConfig.direction === "ascending" ? (
                   <ChevronUp className="ml-1 w-4 h-4 text-white" />
@@ -225,8 +204,13 @@ const HistoryTable = () => {
                   <ChevronDown className="ml-1 w-4 h-4 text-white" />
                 ))}
             </div>
-            <div className="col-span-3 flex items-center cursor-pointer" onClick={() => requestSort("originalLink")}>
-              <span className="text-xs font-medium text-white uppercase">Original Link</span>
+            <div
+              className="col-span-3 flex items-center cursor-pointer"
+              onClick={() => requestSort("originalLink")}
+            >
+              <span className="text-xs font-medium text-white uppercase">
+                Original Link
+              </span>
               {sortConfig?.key === "originalLink" &&
                 (sortConfig.direction === "ascending" ? (
                   <ChevronUp className="ml-1 w-4 h-4 text-white" />
@@ -234,8 +218,13 @@ const HistoryTable = () => {
                   <ChevronDown className="ml-1 w-4 h-4 text-white" />
                 ))}
             </div>
-            <div className="col-span-1 flex items-center cursor-pointer" onClick={() => requestSort("clicks")}>
-              <span className="text-xs font-medium text-white uppercase">Clicks</span>
+            <div
+              className="col-span-1 flex items-center cursor-pointer"
+              onClick={() => requestSort("clicks")}
+            >
+              <span className="text-xs font-medium text-white uppercase">
+                Clicks
+              </span>
               {sortConfig?.key === "clicks" &&
                 (sortConfig.direction === "ascending" ? (
                   <ChevronUp className="ml-1 w-4 h-4 text-white" />
@@ -244,12 +233,14 @@ const HistoryTable = () => {
                 ))}
             </div>
             <div className="col-span-1 flex justify-end">
-              <span className="text-xs font-medium text-white uppercase">Actions</span>
+              <span className="text-xs font-medium text-white uppercase">
+                Actions
+              </span>
             </div>
           </div>
 
-          {/* Grid Items */}
-          <div className="divide-y divide-[#0f1318] bg-[#0e131e]">
+          {/* Grid Items with vertical scroll */}
+          <div className="divide-y divide-[#0f1318] bg-[#0e131e] max-h-[500px]">
             {filteredData.length > 0 ? (
               filteredData.map((item) => (
                 <div
@@ -271,7 +262,9 @@ const HistoryTable = () => {
                       </div>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-xs text-gray-400">Original Link</span>
+                      <span className="text-xs text-gray-400">
+                        Original Link
+                      </span>
                       {editingId === item._id ? (
                         <div className="flex items-center space-x-2 max-w-[60%]">
                           <input
@@ -294,7 +287,9 @@ const HistoryTable = () => {
                           </button>
                         </div>
                       ) : (
-                        <span className="text-gray-300 text-sm truncate max-w-[50%]">{item.originalLink}</span>
+                        <span className="text-gray-300 text-sm truncate max-w-[50%]">
+                          {item.originalLink}
+                        </span>
                       )}
                     </div>
                     <div className="flex justify-between">
@@ -353,10 +348,14 @@ const HistoryTable = () => {
                         </button>
                       </div>
                     ) : (
-                      <span className="text-gray-300 text-sm truncate">{item.originalLink}</span>
+                      <span className="text-gray-300 text-sm truncate">
+                        {item.originalLink}
+                      </span>
                     )}
                   </div>
-                  <div className="hidden md:grid md:col-span-1 text-white">{item.clicks}</div>
+                  <div className="hidden md:grid md:col-span-1 text-white">
+                    {item.clicks}
+                  </div>
                   <div className="hidden md:flex md:col-span-1 justify-end space-x-2">
                     <button
                       onClick={() => handleEdit(item)}
@@ -377,13 +376,15 @@ const HistoryTable = () => {
                 </div>
               ))
             ) : (
-              <div className="p-8 text-center text-gray-400">No links found</div>
+              <div className="p-8 text-center text-gray-400">
+                No links found
+              </div>
             )}
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default HistoryTable
+export default HistoryTable;

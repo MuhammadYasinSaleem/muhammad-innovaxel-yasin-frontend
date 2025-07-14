@@ -1,17 +1,17 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Navbar from "./components/layout/Navbar"
-import { Clock, BarChartBigIcon as ChartColumnBig, ArrowRight, Copy, Check } from "lucide-react"
+import { ArrowRight, Copy, Check, LinkIcon } from "lucide-react"
 import HistoryTable from "./components/ui/HistoryTable"
-import { LinkIcon } from "lucide-react"
 import { useUrlShortener } from "@/hooks/useUrlShortener"
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"history" | "statistics">("history")
   const [mobileUrl, setMobileUrl] = useState("")
   const [copied, setCopied] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [showError, setShowError] = useState(false)
   const { shortenUrl, isLoading, error, shortenedUrl, clearResult } = useUrlShortener()
 
   const handleMobileShortenUrl = async () => {
@@ -41,6 +41,22 @@ export default function Home() {
       clearResult()
     }
   }
+
+  useEffect(() => {
+    if (shortenedUrl) {
+      setShowSuccess(true)
+      const timer = setTimeout(() => setShowSuccess(false), 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [shortenedUrl])
+
+  useEffect(() => {
+    if (error) {
+      setShowError(true)
+      const timer = setTimeout(() => setShowError(false), 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [error])
 
   return (
     <div className="min-h-screen w-full bg-gray-900 text-white overflow-hidden">
@@ -80,14 +96,14 @@ export default function Home() {
               </div>
 
               {/* Mobile Error Message */}
-              {error && (
+              {error && showError && (
                 <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
                   <p className="text-red-400 text-xs">{error}</p>
                 </div>
               )}
 
               {/* Mobile Success Message */}
-              {shortenedUrl && (
+              {shortenedUrl && showSuccess && (
                 <div className="mt-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -110,60 +126,10 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="w-screen h-15 bg-[#181e29] flex items-center justify-center gap-7">
-          {/* History Tab */}
-          <button
-            onClick={() => setActiveTab("history")}
-            className={`flex flex-col items-center focus:outline-none group cursor-pointer`}
-          >
-            <div
-              className={`flex items-center px-3 py-1 transition-all ${
-                activeTab === "history" ? "text-blue-400" : "text-white"
-              }`}
-            >
-              <Clock className="inline-block mr-2" width={15} />
-              <span className="text-lg">History</span>
-            </div>
-            {activeTab === "history" && (
-              <div className="w-full h-1 rounded-t bg-blue-500 shadow-[0_-4px_16px_0_rgba(59,130,246,0.5)]" />
-            )}
-          </button>
-
-          {/* Statistics Tab */}
-          <button
-            onClick={() => setActiveTab("statistics")}
-            className={`flex flex-col items-center focus:outline-none group cursor-pointer`}
-          >
-            <div
-              className={`flex items-center px-3 py-1 transition-all ${
-                activeTab === "statistics" ? "text-blue-400" : "text-white"
-              }`}
-            >
-              <ChartColumnBig className="inline-block mr-2" width={15} />
-              <span className="text-lg">Statistics</span>
-            </div>
-            {activeTab === "statistics" && (
-              <div className="w-full h-1 rounded-t bg-blue-500 shadow-[0_-4px_16px_0_rgba(59,130,246,0.5)]" />
-            )}
-          </button>
+        {/* Show HistoryTable by default */}
+        <div className="w-full max-w-6xl mt-8">
+          <HistoryTable />
         </div>
-
-        {/* Render HistoryTable when activeTab is "history" */}
-        {activeTab === "history" && (
-          <div className="w-full max-w-6xl mt-8">
-            <HistoryTable />
-          </div>
-        )}
-
-        {/* Statistics Tab Content */}
-        {activeTab === "statistics" && (
-          <div className="w-full max-w-6xl mt-8 p-4">
-            <div className="bg-[#0d1117] rounded-lg p-6">
-              <h2 className="text-2xl font-bold mb-4">Statistics</h2>
-              <p className="text-gray-400">Statistics feature coming soon...</p>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
