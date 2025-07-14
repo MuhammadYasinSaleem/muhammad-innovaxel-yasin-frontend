@@ -18,7 +18,7 @@ A modern, responsive Next.js 13+ (App Router) frontend for a URL shortener web a
 
 ```bash
 git clone https://github.com/MuhammadYasinSaleem/muhammad-innovaxel-yasin-frontend.git
-cd muhammad-innovaxel-yasin-frontend/client
+cd muhammad-innovaxel-yasin-frontend
 ```
 
 ### 2. Install Dependencies
